@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: publicdocs-test
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:henrik-nic/nicPublicdocs.git
+    targetRevision: main
+    path: deploy/overlays/test
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: local-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

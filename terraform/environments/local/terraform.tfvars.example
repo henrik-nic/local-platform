@@ -1,0 +1,4 @@
+cluster_name = "local"
+base_domain  = "localtest.me"
+argocd_host  = "argocd.localtest.me"
+argocd_tls_secret_name = "argocd-server-tls"

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nicpublicdocs
+spec:
+  selector:
+    app: nicpublicdocs
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
