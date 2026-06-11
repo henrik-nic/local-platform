@@ -30,6 +30,7 @@ done
 
 "${ROOT_DIR}/scripts/build-app-image.sh" "${APP_NAME}" "${APP_DIR}" "${TAG}"
 kubectl apply -k "${OVERLAY_DIR}"
+"${ROOT_DIR}/scripts/verify-app-deployment.sh" "${APP_NAME}" "${OVERLAY_ENV}"
 
 echo
 echo "${APP_NAME} ${OVERLAY_ENV} deployed."

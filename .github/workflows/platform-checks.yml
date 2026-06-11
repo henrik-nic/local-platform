@@ -1,0 +1,46 @@
+name: Platform Checks
+
+on:
+  push:
+    paths:
+      - "README.md"
+      - "gitops/**"
+      - "scripts/**"
+      - ".github/workflows/platform-checks.yml"
+  pull_request:
+    paths:
+      - "README.md"
+      - "gitops/**"
+      - "scripts/**"
+      - ".github/workflows/platform-checks.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate shell scripts
+        run: |
+          for script in scripts/*.sh; do
+            bash -n "$script"
+          done
+
+      - name: Validate expected platform files
+        run: |
+          test -f README.md
+          test -f gitops/templates/app/application.yaml.tpl
+          test -f gitops/templates/app/base/deployment.yaml.tpl
+          test -f gitops/templates/app/base/service.yaml.tpl
+          test -f gitops/templates/app/base/ingress.yaml.tpl
+          test -f gitops/templates/app/base/kustomization.yaml.tpl
+          test -f gitops/templates/app/overlays/dev/kustomization.yaml.tpl
+          test -f gitops/templates/app/overlays/test/kustomization.yaml.tpl
+          test -f gitops/templates/app/overlays/stage/kustomization.yaml.tpl
+          test -f gitops/templates/app/overlays/prod/kustomization.yaml.tpl
+          test -d gitops/environments/dev
+          test -d gitops/environments/test
+          test -d gitops/environments/stage
+          test -d gitops/environments/prod

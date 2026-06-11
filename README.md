@@ -194,6 +194,10 @@ cd local-platform
 ./scripts/deploy-app-dev.sh app1 ../app1 dev dev
 ```
 
+That deploy command now includes an automatic verification step. It waits for the
+deployment to become available, confirms the service and ingress exist, and
+performs an HTTP check against the environment URL when `curl` is installed.
+
 Then open:
 
 ```text
@@ -213,6 +217,26 @@ Then the environment URLs become:
 - `https://app1-test.localtest.me:8443`
 - `https://app1-stage.localtest.me:8443`
 - `https://app1-prod.localtest.me:8443`
+
+You can also run the verification directly:
+
+```bash
+cd local-platform
+./scripts/verify-app-deployment.sh app1 test
+```
+
+## Continuous checks
+
+This repo can automatically check itself on every push or pull request through
+GitHub Actions:
+
+- shell syntax validation for `scripts/*.sh`
+- platform file presence checks for environment folders and templates
+
+That gives you two kinds of protection:
+
+- deploy-time verification whenever you use `deploy-app-dev.sh`
+- change-time verification whenever this repo is updated in GitHub
 
 ## Environment model
 
