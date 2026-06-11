@@ -6,7 +6,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:henrik-nic/nicPublicdocs.git
+    # Change this to your own application repository before syncing with Argo CD.
+    repoURL: git@github.com:your-org/your-publicdocs-repo.git
     targetRevision: main
     path: deploy/overlays/dev
   destination:

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: __APP_NAME__
+spec:
+  selector:
+    app: __APP_NAME__
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

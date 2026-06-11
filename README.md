@@ -2,7 +2,7 @@
 
 Portable local platform bootstrap for a multi-environment workflow built around:
 
-- one application repo
+- one or many application repos
 - Git tags and versions for promotion
 - local `dev`, `test`, `stage`, and `prod-sim` namespaces
 - Argo CD for GitOps bootstrapping
@@ -18,6 +18,10 @@ local-platform/
       stage/
       prod/
   scripts/
+    create-app.sh
+    build-app-image.sh
+    deploy-app-dev.sh
+    apply-app-tls.sh
     install-prereqs.sh
     bootstrap-local.sh
     apply-nicpublicdocs-tls.sh
@@ -38,6 +42,8 @@ local-platform/
 - `terraform/modules/local_platform`: reusable local cluster bootstrap logic
 - `terraform/environments/local`: the machine-specific entrypoint for your local platform
 - `gitops/environments/*`: placeholders for per-environment Argo CD apps/manifests
+- `gitops/templates/app`: reusable templates for scaffolding a new app
+- `gitops/apps/<app-name>`: per-app Kubernetes manifests and overlays
 - `scripts/bootstrap-local.sh`: one-command bootstrap for a fresh machine
 
 ## Clone and run on another machine
@@ -95,54 +101,131 @@ Argo CD is published through ingress with a locally trusted certificate at:
 `localtest.me` resolves to `127.0.0.1`, so you do not need to edit your hosts file for that hostname.
 The bootstrap flow uses `mkcert` to install a local development CA and generate the TLS certificate used by the Argo CD ingress.
 
-## Deploying nicPublicdocs
+## Multi-app model
 
-`nicPublicdocs` is treated as the application source repo and now also contains the Kubernetes deployment manifests that Argo CD can render.
+This platform can host as many repos as the user wants.
 
-Kustomize overlays live under `nicPublicdocs/deploy/overlays`:
+Recommended pattern:
 
-- `deploy/overlays/dev`
-- `deploy/overlays/test`
-- `deploy/overlays/stage`
-- `deploy/overlays/prod`
+- One Git repository per app
+- One Argo CD repository secret per repo
+- One app scaffold under `gitops/apps/<app-name>`
+- One Argo CD `Application` manifest per app per environment
 
-To test locally, build and push an image into the local k3d registry:
+For example, with 10 repos you would have:
+
+- `gitops/apps/app1`
+- `gitops/apps/app2`
+- `gitops/apps/app3`
+- ...
+
+Each app can point to a different GitHub repo, branch, and deploy key.
+
+## Add a new app
+
+Create the local Kubernetes and Argo CD scaffold:
 
 ```bash
 cd local-platform
-./scripts/build-nicpublicdocs-image.sh dev
+./scripts/create-app.sh app1
+```
+
+That creates:
+
+- `gitops/apps/app1/base`
+- `gitops/apps/app1/overlays/dev`
+- `gitops/apps/app1/overlays/test`
+- `gitops/apps/app1/overlays/stage`
+- `gitops/apps/app1/overlays/prod`
+- `gitops/environments/dev/app1-application.yaml`
+- `gitops/environments/test/app1-application.yaml`
+- `gitops/environments/stage/app1-application.yaml`
+- `gitops/environments/prod/app1-application.yaml`
+
+Before syncing with Argo CD, change these values in the generated application files:
+
+- `gitops/environments/dev/<app-name>-application.yaml`
+- `gitops/environments/test/<app-name>-application.yaml`
+- `gitops/environments/stage/<app-name>-application.yaml`
+- `gitops/environments/prod/<app-name>-application.yaml`
+- `gitops/bootstrap/repo-access/argocd-repo-secret.template.yaml`
+
+What to change:
+
+- Replace `git@github.com:your-org/your-app.git` with your own Git repository URL.
+- Keep `targetRevision: main` only if your default branch is actually `main`.
+- Replace `REPLACE_WITH_LOCAL_PRIVATE_KEY` with the private deploy key that can read your repo.
+
+If you use the helper script, pass your repo URL explicitly:
+
+```bash
+cd local-platform
+./scripts/create-argocd-repo-secret.sh git@github.com:your-org/your-app.git
+```
+
+The script now refuses to guess a repository, so a new user will not accidentally deploy Henrik's repo.
+
+If you manage multiple repositories, use one Argo CD repository secret per repo. The helper script supports this directly:
+
+```bash
+cd local-platform
+./scripts/create-argocd-repo-secret.sh git@github.com:your-org/app1.git app1-repo app1 ./.secrets/argocd/app1_deploy_key
+./scripts/create-argocd-repo-secret.sh git@github.com:your-org/app2.git app2-repo app2 ./.secrets/argocd/app2_deploy_key
+```
+
+Recommended convention when you have many repos:
+
+- Secret name: `<repo-name>-repo`
+- Argo CD repo name: `<repo-name>`
+- Key path: `.secrets/argocd/<repo-name>_deploy_key`
+
+That makes 10 repos manageable without collisions or hardcoded app names.
+
+## Local build and deploy for any app
+
+To test an app locally, build and push an image into the local k3d registry:
+
+```bash
+cd local-platform
+./scripts/build-app-image.sh app1 ../app1 dev
 ```
 
 For the fastest local `dev` flow, deploy directly into the `local-dev` namespace:
 
 ```bash
 cd local-platform
-./scripts/deploy-nicpublicdocs-dev.sh
+./scripts/deploy-app-dev.sh app1 ../app1 dev dev
 ```
-
-That builds the `dev` image, pushes it to the local k3d registry, and applies the `dev` Kustomize overlay.
 
 Then open:
 
 ```text
-http://nicpublicdocs-dev.localtest.me:8080
+http://app1-dev.localtest.me:8080
 ```
 
-To enable trusted HTTPS for `dev`, `test`, `stage`, and `prod`, generate and apply local TLS secrets:
+To enable trusted HTTPS for an app across all local environments:
 
 ```bash
 cd local-platform
-./scripts/apply-nicpublicdocs-tls.sh
+./scripts/apply-app-tls.sh app1
 ```
 
 Then the environment URLs become:
 
-- `https://nicpublicdocs-dev.localtest.me:8443`
-- `https://nicpublicdocs-test.localtest.me:8443`
-- `https://nicpublicdocs-stage.localtest.me:8443`
-- `https://nicpublicdocs-prod.localtest.me:8443`
+- `https://app1-dev.localtest.me:8443`
+- `https://app1-test.localtest.me:8443`
+- `https://app1-stage.localtest.me:8443`
+- `https://app1-prod.localtest.me:8443`
 
-Argo CD can still be layered on top afterward once the local `dev` path is confirmed working.
+## nicPublicdocs example
+
+`nicPublicdocs` is still here as a backwards-compatible example app and wrapper flow.
+
+Its example overlays live under `gitops/apps/nicpublicdocs/overlays` and its old wrapper scripts still work:
+
+- `./scripts/build-nicpublicdocs-image.sh`
+- `./scripts/deploy-nicpublicdocs-dev.sh`
+- `./scripts/apply-nicpublicdocs-tls.sh`
 
 ## Environment model
 
