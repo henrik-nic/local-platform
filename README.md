@@ -24,9 +24,6 @@ local-platform/
     apply-app-tls.sh
     install-prereqs.sh
     bootstrap-local.sh
-    apply-nicpublicdocs-tls.sh
-    build-nicpublicdocs-image.sh
-    deploy-nicpublicdocs-dev.sh
     start-local.sh
     stop-local.sh
     destroy-local.sh
@@ -216,16 +213,6 @@ Then the environment URLs become:
 - `https://app1-test.localtest.me:8443`
 - `https://app1-stage.localtest.me:8443`
 - `https://app1-prod.localtest.me:8443`
-
-## nicPublicdocs example
-
-`nicPublicdocs` is still here as a backwards-compatible example app and wrapper flow.
-
-Its example overlays live under `gitops/apps/nicpublicdocs/overlays` and its old wrapper scripts still work:
-
-- `./scripts/build-nicpublicdocs-image.sh`
-- `./scripts/deploy-nicpublicdocs-dev.sh`
-- `./scripts/apply-nicpublicdocs-tls.sh`
 
 ## Environment model
 

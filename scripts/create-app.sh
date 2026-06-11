@@ -52,7 +52,7 @@ for env_name in dev test stage prod; do
     -e "s/__APP_NAME__/${APP_NAME}/g" \
     -e "s/__ENV_NAME__/${env_name}/g" \
     -e "s/__NAMESPACE__/${namespace}/g" \
-    "${TEMPLATE_DIR}/publicdocs-application.yaml.tpl" \
+    "${TEMPLATE_DIR}/application.yaml.tpl" \
     > "${ROOT_DIR}/gitops/environments/${env_name}/${APP_NAME}-application.yaml"
 done
 
