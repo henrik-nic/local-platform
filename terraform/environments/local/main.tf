@@ -13,6 +13,8 @@ module "local_platform" {
   source = "../../modules/local_platform"
 
   cluster_name   = var.cluster_name
+  server_count   = var.server_count
+  agent_count    = var.agent_count
   namespaces     = var.namespaces
   app_namespaces = var.app_namespaces
   base_domain    = var.base_domain

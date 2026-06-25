@@ -7,6 +7,7 @@ Portable local platform bootstrap for a multi-environment workflow built around:
 - local `dev`, `test`, `stage`, and `prod-sim` namespaces
 - Argo CD for GitOps bootstrapping
 - MetalLB for `LoadBalancer` services inside the local cluster
+- configurable k3d server/agent counts for local scheduling capacity
 
 ## Repo layout
 
@@ -114,6 +115,7 @@ Notes:
 - If you want app manifests managed by Argo CD to be directly reachable without an ingress, prefer `type: LoadBalancer`.
 - The default MetalLB pool is derived automatically from the k3d Docker network and uses the `.240-.250` range on that subnet.
 - If that range conflicts with your machine, set `metallb_ip_range` in `terraform/environments/local/terraform.tfvars`.
+- The local Terraform environment defaults to `server_count = 1` and `agent_count = 4`.
 
 ## Multi-app model
 

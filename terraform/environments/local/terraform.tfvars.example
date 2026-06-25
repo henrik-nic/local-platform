@@ -1,4 +1,6 @@
 cluster_name = "local"
+server_count = 1
+agent_count  = 4
 base_domain  = "localtest.me"
 argocd_host  = "argocd.localtest.me"
 argocd_tls_secret_name = "argocd-server-tls"

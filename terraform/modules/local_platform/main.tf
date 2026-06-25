@@ -11,8 +11,8 @@ if ! k3d cluster list | grep -q "^$${CLUSTER_NAME} "; then
   k3d registry create local-registry --port 5001 || true
 
   k3d cluster create "$${CLUSTER_NAME}" \
-    --servers 1 \
-    --agents 1 \
+    --servers ${var.server_count} \
+    --agents ${var.agent_count} \
     --registry-use k3d-local-registry:5000 \
     --port "8080:80@loadbalancer" \
     --port "8443:443@loadbalancer"

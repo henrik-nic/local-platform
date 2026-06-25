@@ -4,6 +4,18 @@ variable "cluster_name" {
   default     = "local"
 }
 
+variable "server_count" {
+  type        = number
+  description = "Number of k3d server nodes to create."
+  default     = 1
+}
+
+variable "agent_count" {
+  type        = number
+  description = "Number of k3d agent nodes to create."
+  default     = 4
+}
+
 variable "namespaces" {
   type        = list(string)
   description = "Namespaces to create in the local cluster."

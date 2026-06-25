@@ -3,6 +3,16 @@ variable "cluster_name" {
   description = "Name of the local k3d cluster."
 }
 
+variable "server_count" {
+  type        = number
+  description = "Number of k3d server nodes to create."
+}
+
+variable "agent_count" {
+  type        = number
+  description = "Number of k3d agent nodes to create."
+}
+
 variable "namespaces" {
   type        = list(string)
   description = "Namespaces to create in the local cluster."
