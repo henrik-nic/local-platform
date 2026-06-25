@@ -44,3 +44,15 @@ variable "argocd_tls_secret_name" {
   description = "TLS secret name used by the Argo CD ingress."
   default     = "argocd-server-tls"
 }
+
+variable "metallb_version" {
+  type        = string
+  description = "MetalLB version to install in the local cluster."
+  default     = "v0.14.9"
+}
+
+variable "metallb_ip_range" {
+  type        = string
+  description = "Optional explicit MetalLB address range in start-end form. When empty, the range is derived from the k3d Docker network."
+  default     = ""
+}

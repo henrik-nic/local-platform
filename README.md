@@ -6,6 +6,7 @@ Portable local platform bootstrap for a multi-environment workflow built around:
 - Git tags and versions for promotion
 - local `dev`, `test`, `stage`, and `prod-sim` namespaces
 - Argo CD for GitOps bootstrapping
+- MetalLB for `LoadBalancer` services inside the local cluster
 
 ## Repo layout
 
@@ -97,6 +98,22 @@ Argo CD is published through ingress with a locally trusted certificate at:
 
 `localtest.me` resolves to `127.0.0.1`, so you do not need to edit your hosts file for that hostname.
 The bootstrap flow uses `mkcert` to install a local development CA and generate the TLS certificate used by the Argo CD ingress.
+
+## Service exposure options
+
+This platform now boots MetalLB alongside k3d, which gives Argo CD applications a working Kubernetes `Service` of type `LoadBalancer`.
+
+That means you have two supported exposure paths for local apps:
+
+- `Ingress` through Traefik on `localhost:8080` and `localhost:8443`
+- `LoadBalancer` services backed by a MetalLB IP from the k3d Docker network
+
+Notes:
+
+- A plain `NodePort` service still works as normal inside k3d, but it is not usually the best fit for local GitOps apps because you then have to manage host-to-node port mappings yourself.
+- If you want app manifests managed by Argo CD to be directly reachable without an ingress, prefer `type: LoadBalancer`.
+- The default MetalLB pool is derived automatically from the k3d Docker network and uses the `.240-.250` range on that subnet.
+- If that range conflicts with your machine, set `metallb_ip_range` in `terraform/environments/local/terraform.tfvars`.
 
 ## Multi-app model
 

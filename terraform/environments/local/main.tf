@@ -18,4 +18,6 @@ module "local_platform" {
   base_domain    = var.base_domain
   argocd_host    = var.argocd_host
   argocd_tls_secret_name = var.argocd_tls_secret_name
+  metallb_version        = var.metallb_version
+  metallb_ip_range       = var.metallb_ip_range
 }

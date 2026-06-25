@@ -37,8 +37,66 @@ SCRIPT
   }
 }
 
+resource "null_resource" "metallb" {
+  depends_on = [null_resource.k3d_cluster]
+
+  triggers = {
+    cluster_name      = var.cluster_name
+    metallb_version   = var.metallb_version
+    metallb_ip_range  = var.metallb_ip_range
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+
+    command = <<SCRIPT
+set -euo pipefail
+
+CLUSTER_NAME="${var.cluster_name}"
+NETWORK_NAME="k3d-$${CLUSTER_NAME}"
+CONFIGURED_RANGE="${var.metallb_ip_range}"
+
+kubectl apply -f "https://raw.githubusercontent.com/metallb/metallb/${var.metallb_version}/config/manifests/metallb-native.yaml"
+kubectl wait --for=condition=Available deployment/controller -n metallb-system --timeout=300s
+
+if [ -n "$${CONFIGURED_RANGE}" ]; then
+  ADDRESS_RANGE="$${CONFIGURED_RANGE}"
+else
+  SUBNET="$(docker network inspect "$${NETWORK_NAME}" -f '{{(index .IPAM.Config 0).Subnet}}')"
+  if [ -z "$${SUBNET}" ]; then
+    echo "Could not determine Docker subnet for network $${NETWORK_NAME}" >&2
+    exit 1
+  fi
+
+  BASE_PREFIX="$(echo "$${SUBNET}" | cut -d/ -f1 | awk -F. '{print $1 "." $2 "." $3}')"
+  ADDRESS_RANGE="$${BASE_PREFIX}.240-$${BASE_PREFIX}.250"
+fi
+
+cat <<YAML | kubectl apply -f -
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: local-platform-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - $${ADDRESS_RANGE}
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: local-platform-l2
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - local-platform-pool
+YAML
+SCRIPT
+  }
+}
+
 resource "null_resource" "argocd" {
-  depends_on = [null_resource.namespaces]
+  depends_on = [null_resource.namespaces, null_resource.metallb]
 
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
